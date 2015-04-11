@@ -23,7 +23,7 @@ module Rulers
 
       # double variable assignment #get_controller_and_action will return an
       # array of 2 things. Class for controller and action name
-      klass, act = get_controller_and_action(env)
+      klass, act = get_controller_and_action(env) # [Quotes, "show"]
       controller = klass.new(env)
 
 
