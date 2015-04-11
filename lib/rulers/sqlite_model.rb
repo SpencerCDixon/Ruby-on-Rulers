@@ -11,6 +11,20 @@ module Rulers
         @hash = data
       end
 
+      # Allows users to call #attribute_name and #attribute_name= on instances
+      # of my SQLite models.  There are a lot of edge cases that are not being
+      # handled here though.
+      def method_missing(method_name, *args, &block)
+        if method_name.to_s =~ /=$/
+          @hash[method_name.to_s.chop] = args.first
+          # Chop to remove the equal sign
+          save!
+        else
+          @hash[method_name.to_s]
+        end
+      end
+
+      # Helper method for creating instances to DB
       def self.to_sql(val)
         case val
         when Numeric
@@ -38,6 +52,28 @@ module Rulers
         sql = "SELECT last_insert_rowid();"
         data["id"] = DB.execute(sql)[0][0]
         self.new data
+      end
+
+      def save!
+        unless @hash["id"]
+          self.class.create
+          return true
+        end
+
+        fields = @hash.map do |k, v|
+          "#{k}=#{self.class.to_sql(v)}"
+        end.join(",")
+
+        DB.execute <<-SQL
+          UPDATE #{self.class.table}
+          SET #{fields}
+          WHERE id = #{@hash["id"]}
+        SQL
+        true
+      end
+
+      def save
+        self.save! rescue false
       end
 
       def self.count
