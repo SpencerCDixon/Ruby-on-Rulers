@@ -26,6 +26,37 @@ module Rulers
           return nil
         end
       end
+
+      def self.all
+        files = Dir["db/quotes/*.json"]
+        files.map { |f| FileModel.new f }
+      end
+
+      def self.create(attrs)
+        hash = {}
+        hash["submitter"] = attrs["submitter"] || ""
+        hash["quote"] = attrs["quote"] || ""
+        hash["attribution"] = attrs["attribution"] || ""
+
+        files = Dir["db/quotes/*.json"]
+        names = files.map { |f| f.split("/")[-1] }
+        highest = names.map { |b| b.to_i }.max
+
+        id = highest + 1 # always increment new ids by 1
+        template = <<-EOH
+          {
+            "submitter": "#{hash["submitter"]}",
+            "quote": "#{hash["quote"]}",
+            "attribution": "#{hash["attribution"]}"
+          }
+        EOH
+
+        File.open("db/quotes/#{id}.json", "w") do |f|
+          f.write template
+        end
+
+        FileModel.new("db/quotes/#{id}.json")
+      end
     end
   end
 end

@@ -1,15 +1,33 @@
 require 'erubis'
+require 'rack/request'
+require_relative 'file_model'
 
 module Rulers
   class Controller
     include Rulers::Model
 
+    attr_reader :env, :request
     def initialize(env)
       @env = env
+      @request ||= Rack::Request.new(@env)
     end
 
-    def env
-      @env
+    def response(text, status = 200, headers = {} )
+      raise "Already responded!" if @response
+      a = [text].flatten
+      @response = Rack::Response.new(a, status, headers)
+    end
+
+    def get_response
+      @response
+    end
+
+    def render_response(*args)
+      response(render(*args))
+    end
+
+    def params
+      request.params
     end
 
     def render(view_name, locals = {})

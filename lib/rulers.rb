@@ -26,13 +26,18 @@ module Rulers
       klass, act = get_controller_and_action(env)
       controller = klass.new(env)
 
+
       begin
         text = controller.send(act) # get http response body from controller's action
+        if controller.get_response
+          st, hd, rs = controller.get_response.to_a
+          [st, hd, [rs.body].flatten]
+        else
+          [200, {'Content-Type' => 'text/html'}, [text]]
+        end
       rescue
-        text = handle_exceptions
+          [404, {'Content-Type' => 'text/html'}, [handle_exceptions]]
       end
-
-      [200, {'Content-Type' => 'text/html'}, [text]]
     end
 
     def handle_exceptions
