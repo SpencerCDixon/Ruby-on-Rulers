@@ -2,7 +2,7 @@ require 'sqlite3'
 require 'rulers/util'
 require 'pry'
 
-DB = SQLite3::Database.new "test.db"
+DB = SQLite3::Database.new "best_quotes.db"
 
 module Rulers
   module Model
@@ -110,6 +110,13 @@ module Rulers
         # combines them together
         # passing in a 2d array to Hash[2d_array] will make a Hash wish the keys
         # as 0 and values as 1
+      end
+
+      def self.all
+        rows = DB.execute <<-SQL
+        select * from #{table};
+        SQL
+        rows.map { |r| self.new(Hash[schema.keys.zip(r)]) }
       end
 
       # Getter/Setters for Model Instance Objects
