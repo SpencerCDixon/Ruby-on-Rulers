@@ -18,6 +18,7 @@ module Rulers
         return [404, { 'Content-Type' => 'text/html' }, []]
       end
 
+      binding.pry
       rack_app = get_rack_app(env)
       rack_app.call(env)
     end

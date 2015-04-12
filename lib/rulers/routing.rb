@@ -1,30 +1,35 @@
 module Rulers
   class Application
-    def get_controller_and_action(env)
-      # _ is used to store stuff we don't use.
-      _, cont, action, after =
-        env["PATH_INFO"].split('/', 4)
+    # def get_controller_and_action(env)
+      # # _ is used to store stuff we don't use.
+      # _, cont, action, after =
+        # env["PATH_INFO"].split('/', 4)
 
-      cont = cont.capitalize # takes controller name and capitalizes it
-      cont += "Controller"
+      # cont = cont.capitalize # takes controller name and capitalizes it
+      # cont += "Controller"
 
-      [Object.const_get(cont), action]
-      # const_get is a method from Kernel most likely that will look up any
-      # constants (like our controllers name)
-    end
+      # [Object.const_get(cont), action]
+      # # const_get is a method from Kernel most likely that will look up any
+      # # constants (like our controllers name)
+    # end
 
     def route(&block)
+      binding.pry
       @route_obj ||= RouteObject.new
       @route_obj.instance_eval(&block)
     end
 
     def get_rack_app(env)
+      binding.pry
       raise 'No routes!' unless @route_obj
+      binding.pry
       @route_obj.check_url(env["PATH_INFO"])
     end
   end
 end
 
+# Route Object is really just responsible for matching whatever the path was in
+# the url to the proper controller/action
 class RouteObject
   def initialize
     @rules = []
@@ -65,6 +70,7 @@ class RouteObject
   end
 
   def check_url(url)
+    binding.pry
     @rules.each do |r|
       m = r[:regexp].match(url)
 
@@ -90,6 +96,7 @@ class RouteObject
   end
 
   def get_dest(dest, routing_params = {})
+    binding.pry
     return dest if dest.respond_to?(:call)
     if dest =~ /^([^#]+)#([^#]+)$/
       name = $1.capitalize
