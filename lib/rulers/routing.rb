@@ -14,15 +14,18 @@ module Rulers
     # end
 
     def route(&block)
-      binding.pry
+      # this gets called as soon as user hits enter on url bar
+      # creates a Route Object if one doesn't already exist
       @route_obj ||= RouteObject.new
+      # block is coming from the config.ru, its all the possible routes being
+      # passed into the RouteObject
       @route_obj.instance_eval(&block)
     end
 
     def get_rack_app(env)
-      binding.pry
+      # will raise error if there are no routes defined in the config.ru
+      # needs routes there in order to match URL's properly
       raise 'No routes!' unless @route_obj
-      binding.pry
       @route_obj.check_url(env["PATH_INFO"])
     end
   end
@@ -70,24 +73,43 @@ class RouteObject
   end
 
   def check_url(url)
-    binding.pry
+    # has all route rules saved in @rules
+    # iterates through to see if the given url from the request
+    # matches any of the regex rules
     @rules.each do |r|
       m = r[:regexp].match(url)
+      # uses each rule regex to try and match url,
+      # if there is a match then set more options
 
       if m
+        # if the url matches one of the rules in config.ru
+        # 1 gets saved as the controller
         options = r[:options]
+        # options are what gets passed after comma in config.ru
+        # copy the options into a params hash
         params = options[:default].dup
+
+
         r[:vars].each_with_index do |v, i|
+          # for each regex capture assign a key value pair into the params hash
+          # that will get passed back
           params[v] = m.captures[i]
         end
+
         dest = nil
         if r[:dest]
           return get_dest(r[:dest], params)
+          # if dest already exists then go fetch it and pass new params hash in
         else
+          # otherwise set up the proper destination
+          # by getting the controller/action from the params hash
           controller = params["controller"]
           action = params["action"]
-          return get_dest("#{controller}" +
-            "##{action}", params)
+
+          # call get_dest with the controller and action properly separated by a
+          # hashtag in order for get_dest to parse properly, also pass in
+          # params for the request
+          return get_dest("#{controller}##{action}", params)
         end
       end
     end
@@ -96,13 +118,18 @@ class RouteObject
   end
 
   def get_dest(dest, routing_params = {})
-    binding.pry
+    # if dest is already a rack object then return it
     return dest if dest.respond_to?(:call)
+
+    # use regex to match the controller and action for the request properly
     if dest =~ /^([^#]+)#([^#]+)$/
       name = $1.capitalize
+      # $1 is the controller name
       cont = Object.const_get("#{name}Controller")
+      # $2 is the action name
       return cont.action($2, routing_params)
     end
+    # if it can't properly match a controller and action then raise an error
     raise "No destination: #{dest.inspect}!"
   end
 end

@@ -44,6 +44,10 @@ module Rulers
       @response
     end
 
+    def redirect_to(target)
+      @response = Rack::Response.new([], 302, { 'Location' => target, 'Content-Type' => 'text/html'})
+    end
+
     def render_response(*args)
       response(render(*args))
     end
