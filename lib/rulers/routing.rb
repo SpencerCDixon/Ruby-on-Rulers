@@ -1,5 +1,6 @@
 module Rulers
   class Application
+    # Old way of getting controller/action
     # def get_controller_and_action(env)
       # # _ is used to store stuff we don't use.
       # _, cont, action, after =
@@ -19,6 +20,9 @@ module Rulers
       @route_obj ||= RouteObject.new
       # block is coming from the config.ru, its all the possible routes being
       # passed into the RouteObject
+      # instance eval allows the block to be scoped to the instance variable
+      # @route_obj so all calls to match will be applied to this requests
+      # route_obj
       @route_obj.instance_eval(&block)
     end
 
@@ -41,18 +45,22 @@ class RouteObject
   def match(url, *args)
     options = {}
     options = args.pop if args[-1].is_a?(Hash)
+
+    # if args is coming in with a default then don't override it to be empty
     options[:default] ||= {}
 
     dest = nil
     dest = args.pop if args.size > 0
     raise "Too many args!" if args.size > 0
 
+    # splits url into different parts
     parts = url.split("/")
     parts.select! { |p| !p.empty? }
 
     vars = []
     regexp_parts = parts.map do |part|
       if part[0] == ":"
+        # puts the controller into vars from :controller
         vars << part[1..-1]
         "([a-zA-Z0-9]+)"
       elsif part[0] == "*"
@@ -68,8 +76,9 @@ class RouteObject
       :regexp => Regexp.new("^/#{regexp}$"),
       :vars => vars,
       :dest => dest,
-      :options => options,
+      :options => options
     })
+    binding.pry
   end
 
   def check_url(url)
